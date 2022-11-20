@@ -80,8 +80,8 @@ jobs:
             sudo docker pull ${{ secrets.DOCKER_USERNAME }}/frontend:latest
             sudo systemctl stop nginx
             sudo docker-compose stop
-            sudo docker-compose rm web
-            sudo docker-compose rm frontend
+            sudo docker-compose rm -f web
+            sudo docker-compose rm -f frontend
             touch .env
             echo -n > .env
             echo DB_ENGINE=${{ secrets.DB_ENGINE }} >> .env
