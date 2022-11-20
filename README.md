@@ -1,4 +1,4 @@
-![workflow]https://github.com/Okulov-Dmitriy/foodgram-project-react/actions/workflows/main.yml/badge.svg
+![workflow](https://github.com/Okulov-Dmitriy/foodgram-project-react/actions/workflows/main.yml/badge.svg)
 
 # О проекте
 
@@ -74,6 +74,12 @@ docker-compose exec web python manage.py collectstatic --no-input
 docker-compose exec web python manage.py щload_ingredients data/ingredients.csv
 ```
 
+Данные для входа в админку:
+
+```
+email: admin@admin.ru
+password: admin
+```
 
 ## Автор
 
