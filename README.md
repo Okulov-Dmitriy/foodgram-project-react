@@ -74,7 +74,6 @@ docker-compose exec web python manage.py collectstatic --no-input
 docker-compose exec web python manage.py щload_ingredients data/ingredients.csv
 ```
 
-
 ## Автор
 
 Окулов Дмитрий
