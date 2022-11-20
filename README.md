@@ -1,4 +1,4 @@
-https://github.com/Okulov-Dmitriy/foodgram-project-react/actions/workflows/main.yml/badge.svg
+![workflow]https://github.com/Okulov-Dmitriy/foodgram-project-react/actions/workflows/main.yml/badge.svg
 
 # О проекте
 
