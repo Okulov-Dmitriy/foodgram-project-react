@@ -1,38 +1,38 @@
+from api.validators import OnlyLettersValidator
 from django.contrib.auth.models import AbstractUser
 from django.db import models
-from api.validators import OnlyLettersValidator
+from django.utils.translation import gettext_lazy as _
 
 from .managers import CustomUserManager
 
 
-class User(AbstractUser):
+class CustomUser(AbstractUser):
     objects = CustomUserManager()
     email = models.EmailField(
-        verbose_name='Адрес электронной почты',
-        max_length=254,
+        _('email address'),
         unique=True,
-        blank=False
+        blank=False,
     )
     username = models.CharField(
-        verbose_name='Уникальный юзернейм',
         max_length=150,
         unique=True,
-        blank=False
+        blank=False,
+        verbose_name=_('username')
     )
     first_name = models.CharField(
-        verbose_name='Имя',
+        _('first name'),
         max_length=150,
         blank=False,
         validators=[OnlyLettersValidator]
     )
     last_name = models.CharField(
-        verbose_name='Фамилия',
+        _('last name'),
         max_length=150,
         blank=False,
         validators=[OnlyLettersValidator]
     )
     password = models.CharField(
-        verbose_name='Пароль',
+        verbose_name=_('password'),
         max_length=150,
         blank=False
     )
@@ -40,23 +40,21 @@ class User(AbstractUser):
     REQUIRED_FIELDS = ['username', 'first_name', 'last_name', 'password']
 
     class Meta:
-        verbose_name = 'Пользователь'
-        verbose_name_plural = 'Пользователи'
         ordering = ('username',)
 
     def __str__(self):
-        return self.username
+        return f'{self.username}'
 
 
 class Subscription(models.Model):
     user = models.ForeignKey(
-        User,
+        CustomUser,
         on_delete=models.CASCADE,
         null=True,
         related_name='subscriber'
     )
     author = models.ForeignKey(
-        User,
+        CustomUser,
         on_delete=models.CASCADE,
         null=True,
         related_name='author'

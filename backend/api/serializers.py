@@ -1,9 +1,9 @@
 from django.contrib.auth import get_user_model
 from django.shortcuts import get_object_or_404
-from djoser.serializers import UserSerializer, UserCreateSerializer
+from djoser.serializers import UserCreateSerializer, UserSerializer
 from drf_extra_fields.fields import Base64ImageField
-from recipes.models import (Tag, Ingredient, Recipe, RecipeIngredient,
-                            FavoriteRecipe, ShoppingCart, RecipeTag)
+from recipes.models import (Favorite, Ingredient, Recipe, RecipeIngredient,
+                            RecipeTag, ShoppingCart, Tag)
 from rest_framework import serializers
 from users.models import Subscription
 
@@ -27,7 +27,7 @@ class CustomUserSerializer(UserSerializer):
 
     def get_is_subscribed(self, obj):
         user = self.context.get('request').user
-        if user.is_anonymous or user == obj:
+        if user.is_anonymous or (user == obj):
             return False
         return Subscription.objects.filter(
             user=user, author=obj
@@ -57,7 +57,7 @@ class CustomUserCreateSerializer(UserCreateSerializer):
     def validate_username(self, value):
         if value == 'me':
             raise serializers.ValidationError(
-                '"me" - недопустимое значение'
+                'Value "me" is forbidden for username.'
             )
         return value
 
@@ -121,7 +121,7 @@ class RecipeGetSerializer(serializers.ModelSerializer):
         user = self.context.get('request').user
         if user.is_anonymous:
             return False
-        return FavoriteRecipe.objects.filter(
+        return Favorite.objects.filter(
             user=user, recipe__id=obj.id
         ).exists()
 
@@ -164,33 +164,34 @@ class RecipeCreateUpdateSerializer(serializers.ModelSerializer):
     def validate(self, data):
         if data['name'] == data['text']:
             raise serializers.ValidationError(
-                'Значания полей "name" и "text" не могут совпадать'
+                'The value of "name" field could '
+                'not be the same as the value of "text" field.'
             )
         if not data['tags']:
             raise serializers.ValidationError(
-                'Поле "Tag" должно быть заполнено'
+                '"Tag" field must be filled out.'
             )
         tags_in_recipe = []
         for tag in data['tags']:
             if tag in tags_in_recipe:
                 raise serializers.ValidationError(
-                    f'Повторяющиеся значения: {tag}'
+                    f'You have repeated tags: {tag}'
                 )
             tags_in_recipe.append(tag)
         if not data['ingredients']:
             raise serializers.ValidationError(
-                'Поле "Ingredients" должно быть заполнено'
+                '"Ingredients" field must be filled out.'
             )
         ing_in_recipe = []
         for ing in data['ingredients']:
             if int(ing['amount']) <= 0:
                 raise serializers.ValidationError(
-                    'Значение должно быть больше нуля'
+                    'Amount must be greater than 0'
                 )
             ingredient = get_object_or_404(Ingredient, id=ing['id'])
             if ingredient in ing_in_recipe:
                 raise serializers.ValidationError(
-                    f'Повторяющиеся значения: {ingredient}'
+                    f'You have repeated ingredients: {ingredient}'
                 )
             ing_in_recipe.append(ingredient)
         return data
@@ -245,7 +246,7 @@ class RecipeCreateUpdateSerializer(serializers.ModelSerializer):
         return instance
 
 
-class SubscriptionSerializer(serializers.ModelSerializer):
+class SubscriptionSerializer(CustomUserSerializer):
     recipes = RecipeShortSerializer(many=True, read_only=True)
     recipes_count = serializers.SerializerMethodField()
 

@@ -1,36 +1,37 @@
 from django.contrib.auth import get_user_model
-from django_filters.rest_framework import DjangoFilterBackend
-from rest_framework import viewsets, status
-from rest_framework.decorators import action
-from rest_framework.response import Response
 from django.shortcuts import get_object_or_404
+from django_filters.rest_framework import DjangoFilterBackend
 from djoser.views import UserViewSet
-from rest_framework.permissions import (AllowAny, IsAuthenticatedOrReadOnly,
-                                        IsAuthenticated, SAFE_METHODS)
-
-from .serializers import (CustomUserCreateSerializer, CustomUserSerializer,
-                          TagSerializer, IngredientSerializer,
-                          SubscriptionSerializer, RecipeGetSerializer,
-                          RecipeCreateUpdateSerializer, RecipeShortSerializer)
-from recipes.models import (Tag, Ingredient, Recipe, FavoriteRecipe,
-                            ShoppingCart)
+from recipes.models import Favorite, Ingredient, Recipe, ShoppingCart, Tag
+from rest_framework import status
+from rest_framework.decorators import action
+from rest_framework.permissions import (SAFE_METHODS, AllowAny,
+                                        IsAuthenticated,
+                                        IsAuthenticatedOrReadOnly)
+from rest_framework.response import Response
+from rest_framework.viewsets import ModelViewSet, ReadOnlyModelViewSet
 from users.models import Subscription
-from .permissions import AuthorOrReadOnly
-from .paginators import PageLimitPagination
+
 from .filters import IngredientFilter, RecipeFilter
+from .paginators import PageLimitPagination
+from .permissions import AuthorOrReadOnly
+from .serializers import (CustomUserCreateSerializer, CustomUserSerializer,
+                          IngredientSerializer, RecipeCreateUpdateSerializer,
+                          RecipeGetSerializer, RecipeShortSerializer,
+                          SubscriptionSerializer, TagSerializer)
 from .services import download_cart
 
 User = get_user_model()
 
 
-class TagsViewSet(viewsets.ModelViewSet):
+class TagViewSet(ReadOnlyModelViewSet):
     queryset = Tag.objects.all().order_by('name')
     serializer_class = TagSerializer
     permission_classes = [AllowAny]
     pagination_class = None
 
 
-class IngredientsViewSet(viewsets.ModelViewSet):
+class IngredientViewSet(ReadOnlyModelViewSet):
     queryset = Ingredient.objects.all().order_by('name')
     serializer_class = IngredientSerializer
     permission_classes = [AllowAny]
@@ -67,13 +68,13 @@ class CustomUserViewSet(UserViewSet):
         if request.method == 'POST':
             if user == author:
                 return Response(
-                    {'errors': 'Запрещено подписываться на себя'},
-                    status=status.HHTP_400_BAD_REQUEST
+                    {'errors': 'It\'s not allowed to subscribe to yourself.'},
+                    status=status.HTTP_400_BAD_REQUEST
                 )
             if subscription.exists():
                 return Response(
-                    {'erros': 'Вы уже подписаны на пользователя'},
-                    status=status.HHTP_400_BAD_REQUEST
+                    {'errors': 'You are already subscribed to the user'},
+                    status=status.HTTP_400_BAD_REQUEST
                 )
             serializer = SubscriptionSerializer(
                 author,
@@ -87,7 +88,7 @@ class CustomUserViewSet(UserViewSet):
             )
         if not subscription.exists():
             return Response(
-                {'errors': 'Вы не подписаны на пользователя'},
+                {'errors': 'You are not subscribed to the user'},
                 status=status.HTTP_400_BAD_REQUEST
             )
         subscription.delete()
@@ -114,7 +115,7 @@ class CustomUserViewSet(UserViewSet):
         return Response(serializer.data, status=status.HTTP_200_OK)
 
 
-class RecipesViewSet(viewsets.ModelViewSet):
+class RecipeViewSet(ModelViewSet):
     queryset = Recipe.objects.all().order_by('-pub_date')
     permission_classes = (AuthorOrReadOnly,)
     pagination_class = PageLimitPagination
@@ -134,7 +135,7 @@ class RecipesViewSet(viewsets.ModelViewSet):
         if request.method == 'POST':
             if current_object.exists():
                 return Response(
-                    {'errors': 'Этот рецепт уже добавлен'},
+                    {'errors': 'It\'s already added'},
                     status=status.HTTP_400_BAD_REQUEST
                 )
             model.objects.create(user=request.user, recipe=recipe)
@@ -147,7 +148,7 @@ class RecipesViewSet(viewsets.ModelViewSet):
                 current_object.delete()
                 return Response(status=status.HTTP_204_NO_CONTENT)
         return Response(
-            {'errors': 'Не добавлено'},
+            {'errors': 'It\'s not added'},
             status=status.HTTP_400_BAD_REQUEST
         )
 
@@ -159,7 +160,7 @@ class RecipesViewSet(viewsets.ModelViewSet):
     def favorite(self, request, pk):
         recipe = get_object_or_404(Recipe, id=pk)
         return self.add_or_delete_object(
-            FavoriteRecipe, recipe=recipe, request=request
+            Favorite, recipe=recipe, request=request
         )
 
     @action(

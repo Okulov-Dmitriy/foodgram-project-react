@@ -1,8 +1,8 @@
 from django.contrib import admin
 from django.contrib.auth import get_user_model
 
-from .models import (FavoriteRecipe, Ingredient, Recipe, RecipeIngredient,
-                     RecipeTag, ShoppingCart, Tag)
+from .models import (Favorite, Ingredient, Recipe, RecipeIngredient, RecipeTag,
+                     ShoppingCart, Tag)
 
 User = get_user_model()
 
@@ -59,4 +59,4 @@ admin.site.register(Recipe, RecipeAdmin)
 admin.site.register(RecipeIngredient, RecipeIngredientAdmin)
 admin.site.register(Tag, TagAdmin)
 admin.site.register(ShoppingCart, ShoppingCartAdmin)
-admin.site.register(FavoriteRecipe, FavoriteAdmin)
+admin.site.register(Favorite, FavoriteAdmin)

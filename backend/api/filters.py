@@ -1,11 +1,14 @@
 from django_filters.rest_framework import FilterSet
 from django_filters.rest_framework.filters import (ModelMultipleChoiceFilter,
                                                    NumberFilter)
-from rest_framework.filters import SearchFilter
 from recipes.models import Recipe, Tag
+from rest_framework.filters import SearchFilter
 
 
 class RecipeFilter(FilterSet):
+    """
+    Filter for Recipes.
+    """
     is_favorited = NumberFilter(method='filter_is_favorited')
     is_in_shopping_cart = NumberFilter(method='filter_is_in_shopping_cart')
     tags = ModelMultipleChoiceFilter(
@@ -31,4 +34,7 @@ class RecipeFilter(FilterSet):
 
 
 class IngredientFilter(SearchFilter):
+    """
+    Filter for Ingredients.
+    """
     search_param = 'name'
