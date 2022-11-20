@@ -16,7 +16,7 @@ subscriptions = CustomUserViewSet.as_view({'get': 'subscriptions', })
 
 urlpatterns = (
     path('users/subscriptions/', subscriptions, name='subscriptions'),
-    path('auth/', include('djoser.urls.authtoken')),
     path('', include('djoser.urls')),
+    path('auth/', include('djoser.urls.authtoken')),
     path('', include(router.urls)),
 )
