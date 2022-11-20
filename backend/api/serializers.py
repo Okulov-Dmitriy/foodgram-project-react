@@ -1,13 +1,37 @@
 from django.contrib.auth import get_user_model
 from django.shortcuts import get_object_or_404
-from users.models import Subscribe
 from djoser.serializers import UserSerializer, UserCreateSerializer
-from rest_framework import serializers
+from drf_extra_fields.fields import Base64ImageField
 from recipes.models import (Tag, Ingredient, Recipe, RecipeIngredient,
                             FavoriteRecipe, ShoppingCart, RecipeTag)
-from drf_extra_fields.fields import Base64ImageField
+from rest_framework import serializers
+from users.models import Subscription
 
 User = get_user_model()
+
+
+class CustomUserSerializer(UserSerializer):
+    is_subscribed = serializers.SerializerMethodField()
+    id = serializers.IntegerField()
+
+    class Meta:
+        model = User
+        fields = (
+            'id',
+            'email',
+            'username',
+            'first_name',
+            'last_name',
+            'is_subscribed',
+        )
+
+    def get_is_subscribed(self, obj):
+        user = self.context.get('request').user
+        if user.is_anonymous or user == obj:
+            return False
+        return Subscription.objects.filter(
+            user=user, author=obj
+        ).exists()
 
 
 class CustomUserCreateSerializer(UserCreateSerializer):
@@ -38,52 +62,12 @@ class CustomUserCreateSerializer(UserCreateSerializer):
         return value
 
 
-class CustomUserSerializer(UserSerializer):
-    is_subscribed = serializers.SerializerMethodField()
-    id = serializers.IntegerField()
-
-    class Meta:
-        model = User
-        fields = (
-            'email',
-            'id',
-            'username',
-            'first_name',
-            'last_name',
-            'is_subscribed',
-        )
-
-    def get_is_subscribed(self, obj):
-        user = self.context.get('request').user
-        if user.is_anonymos or user == obj:
-            return False
-        return Subscribe.objects.filter(
-            user=user, author=obj
-        ).exists()
-
-
-class TagSerializer(serializers.ModelSerializer):
-
-    class Meta:
-        model = Tag
-        fields = ('id', 'name', 'color', 'slug')
-        read_only_fields = '__all__',
-
-
 class IngredientSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = Ingredient
         fields = ('id', 'name', 'measurement_unit')
         read_only_fields = '__all__',
-
-
-class IngredientToRecipeSerializer(serializers.ModelSerializer):
-    id = serializers.IntegerField()
-
-    class Meta:
-        model = RecipeIngredient
-        fields = ('id', 'amount')
 
 
 class RecipeIngredientGetSerializer(serializers.ModelSerializer):
@@ -96,6 +80,22 @@ class RecipeIngredientGetSerializer(serializers.ModelSerializer):
     class Meta:
         model = RecipeIngredient
         fields = ('id', 'name', 'measurement_unit', 'amount')
+
+
+class IngredientToRecipeSerializer(serializers.ModelSerializer):
+    id = serializers.IntegerField()
+
+    class Meta:
+        model = RecipeIngredient
+        fields = ('id', 'amount')
+
+
+class TagSerializer(serializers.ModelSerializer):
+
+    class Meta:
+        model = Tag
+        fields = ('id', 'name', 'color', 'slug')
+        read_only_fields = '__all__',
 
 
 class RecipeGetSerializer(serializers.ModelSerializer):

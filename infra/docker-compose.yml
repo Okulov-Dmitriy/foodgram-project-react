@@ -9,10 +9,8 @@ services:
       - .env
     
   web:
-    image: okulov97/foodgram_backend:latest
+    image: okulov97/backend:latest
     restart: always
-    ports: 
-      - 8000:8000
     volumes:
       - static_value:/app/static/
       - media_value:/app/media/
@@ -22,9 +20,11 @@ services:
       - .env
 
   frontend:
-    image: okulov97/foodgram_frontend:latest
+    image: okulov97/frontend:latest
     volumes:
       - ../frontend/:/app/result_build/
+    depends_on:
+      - web
 
   nginx:
     image: nginx:1.19.3
@@ -39,6 +39,8 @@ services:
       - media_value:/var/html/media/
     depends_on:
       - web
+      - frontend
+
 
 volumes:
   static_value:

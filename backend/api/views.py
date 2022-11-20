@@ -7,28 +7,43 @@ from django.shortcuts import get_object_or_404
 from djoser.views import UserViewSet
 from rest_framework.permissions import (AllowAny, IsAuthenticatedOrReadOnly,
                                         IsAuthenticated, SAFE_METHODS)
+
 from .serializers import (CustomUserCreateSerializer, CustomUserSerializer,
                           TagSerializer, IngredientSerializer,
                           SubscriptionSerializer, RecipeGetSerializer,
                           RecipeCreateUpdateSerializer, RecipeShortSerializer)
 from recipes.models import (Tag, Ingredient, Recipe, FavoriteRecipe,
                             ShoppingCart)
-from users.models import Subscribe
+from users.models import Subscription
 from .permissions import AuthorOrReadOnly
 from .paginators import PageLimitPagination
 from .filters import IngredientFilter, RecipeFilter
 from .services import download_cart
 
-User = get_user_model()  # Нужно для того чтобы взять модель юзера
+User = get_user_model()
+
+
+class TagsViewSet(viewsets.ModelViewSet):
+    queryset = Tag.objects.all().order_by('name')
+    serializer_class = TagSerializer
+    permission_classes = [AllowAny]
+    pagination_class = None
+
+
+class IngredientsViewSet(viewsets.ModelViewSet):
+    queryset = Ingredient.objects.all().order_by('name')
+    serializer_class = IngredientSerializer
+    permission_classes = [AllowAny]
+    filter_backends = (IngredientFilter,)
+    search_fields = ('^name',)
+    pagination_class = None
 
 
 class CustomUserViewSet(UserViewSet):
+    pagination_class = PageLimitPagination
     queryset = User.objects.all()
-    serializer_class = CustomUserSerializer
     permission_classes = [IsAuthenticatedOrReadOnly]
-    # поле для поиска объекта в экземлпяре модели
     lookup_field = 'id'
-    # ключевой урл для поиска объекта
     lookup_url_kwarg = 'id'
 
     def get_serializer_class(self):
@@ -45,7 +60,7 @@ class CustomUserViewSet(UserViewSet):
         user = request.user
         author_id = kwargs.get('id')
         author = get_object_or_404(User, id=author_id)
-        subscription = Subscribe.objects.filter(
+        subscription = Subscription.objects.filter(
             user=user,
             author=author
         )
@@ -64,7 +79,7 @@ class CustomUserViewSet(UserViewSet):
                 author,
                 context={'request': request},
             )
-            Subscribe.objects.create(
+            Subscription.objects.create(
                 user=user, author=author
             )
             return Response(
@@ -97,14 +112,6 @@ class CustomUserViewSet(UserViewSet):
             queryset, many=True
         )
         return Response(serializer.data, status=status.HTTP_200_OK)
-
-
-class TagsViewSet(viewsets.ModelViewSet):
-    queryset = Tag.objects.all().order_by('name')
-    serializer_class = TagSerializer
-    permission_classes = [AllowAny]
-    # Отключивает пагинацию для этого класса
-    pagination_class = None
 
 
 class RecipesViewSet(viewsets.ModelViewSet):
@@ -171,12 +178,3 @@ class RecipesViewSet(viewsets.ModelViewSet):
     def download_shopping_cart(self, request):
         user = request.user
         return download_cart(user=user)
-
-
-class IngredientsViewSet(viewsets.ModelViewSet):
-    queryset = Ingredient.objects.all().order_by('name')
-    serializer_class = IngredientSerializer
-    permission_classes = [AllowAny]
-    pagination_class = None
-    search_fields = ('name',)
-    filter_backends = (IngredientFilter,)
